@@ -1,0 +1,17 @@
+{
+  "timeZone": "Europe/Dublin",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "dataStudio": {
+    "name": "dbt Semantic Layer v.0.0.1",
+    "company": "dbt",
+    "logoUrl": "https://logowik.com/content/uploads/images/dbt5596.jpg",
+    "addonUrl": "https://www.getdbt.com",
+    "supportUrl": "https://www.getdbt.com",
+    "description": "dbt Semantic Layer connector"
+  }
+}
