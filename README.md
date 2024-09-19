@@ -45,6 +45,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Made with ❤️ by [dbt Labs](https://www.getdbt.com)*
+*Made with ❤️ in Dublin *
 
 ---
