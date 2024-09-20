@@ -254,28 +254,34 @@ function pollForResults(dbtRegion, dbtEnvironmentId, dbtAuthToken, queryId) {
   var pollInterval = 4000; // 4 seconds
 
   for (var attempt = 0; attempt < maxAttempts; attempt++) {
+    Logger.log('Polling attempt ' + (attempt + 1) + ' of ' + maxAttempts);
     var result = fetchQueryResults(dbtRegion, dbtEnvironmentId, dbtAuthToken, queryId);
 
     if (result.status === 'SUCCESSFUL') {
+      Logger.log('Query successful. Returning data.');
       return result.data;
     } else if (result.status === 'FAILED') {
+      Logger.log('Query failed: ' + result.error);
       throw new Error('Query failed: ' + result.error);
+    } else if (['QUEUED', 'RUNNING', 'COMPILED'].includes(result.status)) {
+      Logger.log('Query still processing. Status: ' + result.status + '. Waiting before next attempt...');
+      Utilities.sleep(pollInterval);
+    } else {
+      Logger.log('Unexpected query status: ' + result.status);
+      throw new Error('Unexpected query status: ' + result.status);
     }
-
-    // If not successful or failed, wait before trying again
-    Utilities.sleep(pollInterval);
   }
 
+  Logger.log('Query timed out after ' + maxAttempts + ' attempts');
   throw new Error('Query timed out after ' + maxAttempts + ' attempts');
 }
 
-// Fetch the query results from the dbt Semantic Layer
 function fetchQueryResults(dbtRegion, dbtEnvironmentId, dbtAuthToken, queryId) {
   var url = dbtRegion;
   var query = `
     query GetResults($environmentId: BigInt!, $queryId: String!) {
       query(environmentId: $environmentId, queryId: $queryId) {
-        arrowResult
+        jsonResult
         error
         queryId
         sql
@@ -302,7 +308,6 @@ function fetchQueryResults(dbtRegion, dbtEnvironmentId, dbtAuthToken, queryId) {
   };
 
   Logger.log('Fetch Query Results GraphQL: ' + JSON.stringify(payload));
-  Logger.log('Fetch Query Results Headers: ' + JSON.stringify(options.headers));
 
   try {
     var response = UrlFetchApp.fetch(url, options);
@@ -316,53 +321,38 @@ function fetchQueryResults(dbtRegion, dbtEnvironmentId, dbtAuthToken, queryId) {
     }
 
     if (json.data.query.error) {
+      Logger.log('Query error: ' + json.data.query.error);
       throw new Error('Query error: ' + json.data.query.error);
     }
 
-    return {
-      status: json.data.query.status,
-      data: parseArrowResult(json.data.query.arrowResult),
-      error: json.data.query.error
-    };
+    var status = json.data.query.status;
+    var jsonResult = json.data.query.jsonResult;
+
+    if (status === 'SUCCESSFUL' && jsonResult) {
+      // Decode the base64 encoded jsonResult
+      var decodedBytes = Utilities.base64Decode(jsonResult);
+      var decodedString = "";
+      for (var i = 0; i < decodedBytes.length; i++) {
+        decodedString += String.fromCharCode(decodedBytes[i]);
+      }
+      var parsedResult = JSON.parse(decodedString);
+      Logger.log('Decoded and parsed result: ' + JSON.stringify(parsedResult));
+
+      return {
+        status: status,
+        data: parsedResult.data,
+        error: null
+      };
+    } else {
+      Logger.log('Query not yet complete. Status: ' + status);
+      return {
+        status: status,
+        data: null,
+        error: json.data.query.error
+      };
+    }
   } catch (e) {
     Logger.log('Fetch query results error: ' + e.message);
     throw e;
-  }
-}
-
-// Parse the Arrow result from the query
-function parseArrowResult(arrowResult) {
-  if (!arrowResult) {
-    Logger.log('Arrow result is null or undefined');
-    return [];
-  }
-
-  try {
-    // Define the Cloud Function endpoint
-    var url = 'https://us-central1-sales-demo-project-314714.cloudfunctions.net/deploy_arrow';
-
-    // Set up the request payload
-    var payload = JSON.stringify({
-      arrowResult: arrowResult
-    });
-
-    // Set up the POST request options
-    var options = {
-      method: 'POST',
-      contentType: 'application/json',
-      payload: payload
-    };
-
-    // Send the request to the Cloud Function
-    var response = UrlFetchApp.fetch(url, options);
-
-    // Parse the response and log it
-    var json = JSON.parse(response.getContentText());
-    Logger.log('Parsed Arrow Result: ' + JSON.stringify(json));
-
-    return json;
-  } catch (e) {
-    Logger.log('Error parsing Arrow result: ' + e.message);
-    return [];
   }
 }
