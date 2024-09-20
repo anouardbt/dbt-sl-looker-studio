@@ -27,7 +27,7 @@ This repository contains a Google Apps Script connector for Looker Studio that i
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/dbt-semantic-layer-connector.git
+   git clone https://github.com/anouardbt/dbt-sl-looker-studio.git
    ```
 
 2. **Set Up Google Apps Script:**
