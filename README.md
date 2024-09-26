@@ -1,7 +1,10 @@
 # dbt-sl-looker-studio
 This repository contains a Google Apps Script connector for Looker Studio that integrates with the dbt Semantic Layer. It allows you to seamlessly connect your dbt data semantics models to Looker Studio, enabling advanced data visualization and analytics.
 
-Sure, here's the Markdown version of the GitHub repository description:
+Work in Progress : 
+- Support for date granularities and date dimensions
+- Support for filtering.
+
 
 ---
 
@@ -21,6 +24,7 @@ This repository contains a Google Apps Script connector for Looker Studio that i
 - **Easy Integration:** Connect Looker Studio directly to your dbt Semantic Layer without complex configurations.
 - **Real-time Data:** Fetch up-to-date data from your dbt models for accurate reporting.
 - **Customizable Visualizations:** Leverage Looker Studio's capabilities to create insightful dashboards based on dbt SL data.
+
 
 ## Installation
 
